@@ -96,6 +96,13 @@ class Configuration
     private $migrations = array();
 
     /**
+     * Array of ignored table names
+     *
+     * @var array
+     */
+    private $ignoredTables = array();
+
+    /**
      * Construct a migration configuration object.
      *
      * @param Connection   $connection   A Connection instance
@@ -560,5 +567,46 @@ class Configuration
 
             return $version->getVersion() <= $to;
         }
+    }
+
+    /**
+     * Add ignored table name
+     *
+     * @param string $tableName
+     */
+    public function addIgnoredTableName($tableName)
+    {
+        $this->ignoredTables[] = $tableName;
+    }
+
+    /**
+     * Clear ignored table names array
+     */
+    public function clearIgnoredTableNames()
+    {
+        $this->ignoredTables = array();
+    }
+
+    /**
+     * Set ignored tables
+     *
+     * @param array $tableNames
+     */
+    public function setIgnoredTableNames(array $tableNames)
+    {
+        $this->clearIgnoredTableNames();
+        foreach($tableNames as $tableName) {
+            $this->addIgnoredTableName($tableName);
+        }
+    }
+
+    /**
+     * Get ignored table names
+     *
+     * @return array
+     */
+    public function getIgnoredTableNames()
+    {
+        return $this->ignoredTables;
     }
 }

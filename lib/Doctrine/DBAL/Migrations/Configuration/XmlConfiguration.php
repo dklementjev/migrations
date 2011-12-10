@@ -54,5 +54,10 @@ class XmlConfiguration extends AbstractFileConfiguration
                 $this->registerMigration((string) $migration['version'], (string) $migration['class']);
             }
         }
+        if(isset($xml->{'ignored_tables'}->table)) {
+            foreach($xml->{'ignored_tables'}->table as $table) {
+                $this->addIgnoredTable((string)$table);
+            }
+        }
     }
 }

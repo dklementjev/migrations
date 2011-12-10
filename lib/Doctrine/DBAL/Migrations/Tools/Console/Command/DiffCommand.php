@@ -21,10 +21,13 @@ namespace Doctrine\DBAL\Migrations\Tools\Console\Command;
 
 use Doctrine\DBAL\Migrations\Configuration\Configuration;
 use Doctrine\DBAL\Version as DbalVersion;
+use Doctrine\DBAL\Schema\Schema;
 use Doctrine\ORM\Tools\SchemaTool;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Input\InputArgument;
+
 
 /**
  * Command for generate migration classes by comparing your current database schema
@@ -98,6 +101,9 @@ EOT
             }
         }
 
+        $this->removeIgnoredTablesFromSchema($configuration, $fromSchema);
+        $this->removeIgnoredTablesFromSchema($configuration, $toSchema);
+
         $up = $this->buildCodeFromSql($configuration, $fromSchema->getMigrateToSql($toSchema, $platform));
         $down = $this->buildCodeFromSql($configuration, $fromSchema->getMigrateFromSql($toSchema, $platform));
 
@@ -128,5 +134,14 @@ EOT
         }
 
         return implode("\n", $code);
+    }
+
+    private function removeIgnoredTablesFromSchema(Configuration $configuration, Schema $schema)
+    {
+        foreach($configuration->getIgnoredTableNames() as $tableName) {
+            if($schema->hasTable($tableName)) {
+                $schema->dropTable($tableName);
+            }
+        }
     }
 }
