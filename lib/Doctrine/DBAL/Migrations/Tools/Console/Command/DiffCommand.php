@@ -108,9 +108,10 @@ EOT
         }
 
         $version = date('YmdHis');
-        $path = $this->generateMigration($configuration, $input, $version, $up, $down);
+        $path = $this->generateMigration($configuration, $input, $output, $version, $up, $down);
 
-        $output->writeln(sprintf('Generated new migration class to "<info>%s</info>" from schema differences.', $path));
+        if(!empty($path))
+            $output->writeln(sprintf('Generated new migration class to "<info>%s</info>" from schema differences.', $path));
     }
 
     private function buildCodeFromSql(Configuration $configuration, array $sql)

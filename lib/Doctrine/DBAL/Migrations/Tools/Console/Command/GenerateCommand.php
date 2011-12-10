@@ -71,6 +71,7 @@ class Version<version> extends AbstractMigration
                 ->setName('migrations:generate')
                 ->setDescription('Generate a blank migration class.')
                 ->addOption('editor-cmd', null, InputOption::VALUE_OPTIONAL, 'Open file with this command upon creation.')
+                ->addOption('stdout', null, InputOption::VALUE_NONE, 'Dump migration code to STDOUT')
                 ->setHelp(<<<EOT
 The <info>%command.name%</info> command generates a blank migration class:
 
@@ -90,12 +91,13 @@ EOT
         $configuration = $this->getMigrationConfiguration($input, $output);
 
         $version = date('YmdHis');
-        $path = $this->generateMigration($configuration, $input, $version);
+        $path = $this->generateMigration($configuration, $input, $output, $version);
 
-        $output->writeln(sprintf('Generated new migration class to "<info>%s</info>"', $path));
+        if(!empty($path))
+            $output->writeln(sprintf('Generated new migration class to "<info>%s</info>"', $path));
     }
 
-    protected function generateMigration(Configuration $configuration, InputInterface $input, $version, $up = null, $down = null)
+    protected function generateMigration(Configuration $configuration, InputInterface $input, OutputInterface $output, $version, $up = null, $down = null)
     {
         $placeHolders = array(
             '<namespace>',
@@ -110,19 +112,28 @@ EOT
             $down ? "        " . implode("\n        ", explode("\n", $down)) : null
         );
         $code = str_replace($placeHolders, $replacements, self::$_template);
-        $dir = $configuration->getMigrationsDirectory();
-        $dir = $dir ? $dir : getcwd();
-        $dir = rtrim($dir, '/');
-        $path = $dir . '/Version' . $version . '.php';
 
-        if ( ! file_exists($dir)) {
-            throw new \InvalidArgumentException(sprintf('Migrations directory "%s" does not exist.', $dir));
+        if(!$input->getOption('stdout'))
+        {
+            $dir = $configuration->getMigrationsDirectory();
+            $dir = $dir ? $dir : getcwd();
+            $dir = rtrim($dir, '/');
+            $path = $dir . '/Version' . $version . '.php';
+
+            if (!file_exists($dir)) {
+                throw new \InvalidArgumentException(sprintf('Migrations directory "%s" does not exist.', $dir));
+            }
+
+            file_put_contents($path, $code);
+
+            if ($editorCmd = $input->getOption('editor-cmd')) {
+                shell_exec($editorCmd . ' ' . escapeshellarg($path));
+            }
         }
-
-        file_put_contents($path, $code);
-
-        if ($editorCmd = $input->getOption('editor-cmd')) {
-            shell_exec($editorCmd . ' ' . escapeshellarg($path));
+        else
+        {
+            $output->writeln($code, OutputInterface::OUTPUT_RAW);
+            $path = null;
         }
 
         return $path;
